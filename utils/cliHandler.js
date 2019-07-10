@@ -36,6 +36,10 @@ module.exports = meow(
         type: 'boolean',
         alias: 'v',
       },
+      watch: {
+        type: 'boolean',
+        alias: 'w',
+      },
     },
   }
 );

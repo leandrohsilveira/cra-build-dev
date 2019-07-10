@@ -8,7 +8,7 @@ const path = require('path');
 const ora = require('ora');
 
 const {
-  flags: { buildPath, publicPath, reactScriptsVersion, verbose },
+  flags: { buildPath, publicPath, reactScriptsVersion, verbose, watch },
 } = require('../utils/cliHandler');
 const { getReactScriptsVersion, isEjected } = require('../utils');
 
@@ -23,8 +23,8 @@ const config =
         ? importCwd('./config/webpack.config')
         : importCwd('react-scripts/config/webpack.config'))('development')
     : isEjected
-      ? importCwd('./config/webpack.config.dev')
-      : importCwd('react-scripts/config/webpack.config.dev');
+    ? importCwd('./config/webpack.config.dev')
+    : importCwd('react-scripts/config/webpack.config.dev');
 
 const HtmlWebpackPlugin = importCwd('html-webpack-plugin');
 const InterpolateHtmlPlugin = importCwd('react-dev-utils/InterpolateHtmlPlugin');
@@ -95,8 +95,7 @@ spinner.start('Clear destination folder');
 
 let inProgress = false;
 
-fs
-  .emptyDir(paths.appBuild)
+fs.emptyDir(paths.appBuild)
   .then(() => {
     spinner.succeed();
 
@@ -105,13 +104,17 @@ fs
       webpackCompiler.apply(
         new webpack.ProgressPlugin(() => {
           if (!inProgress) {
-            spinner.start('Start webpack watch');
+            if (watch) spinner.start('Start webpack watch');
+            else spinner.start('Start webpack build');
             inProgress = true;
           }
         })
       );
 
-      webpackCompiler.watch({}, (err, stats) => {
+      if (watch) webpackCompiler.watch({}, callback);
+      else webpackCompiler.run(callback);
+
+      function callback(err, stats) {
         if (err) {
           return reject(err);
         }
@@ -131,7 +134,7 @@ fs
         }
 
         return resolve();
-      });
+      }
     });
   })
   .then(() => copyPublicFolder());
